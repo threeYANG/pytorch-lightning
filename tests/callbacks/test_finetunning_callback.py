@@ -41,7 +41,7 @@ def test_finetuning_callback(tmpdir):
             return [optimizer], [lr_scheduler]
 
         def train_dataloader(self):
-            return DataLoader(RandomDataset(32, 64))
+            return DataLoader(RandomDataset(32, 64), batch_size=2)
 
     class TestCallback(BackboneLambdaFinetuningCallback):
 
