@@ -13,18 +13,19 @@
 # limitations under the License.
 import torch
 from torch import nn
+from torch.utils.data import DataLoader
 
 from pytorch_lightning import seed_everything, Trainer
 from pytorch_lightning.callbacks import BackboneLambdaFinetuningCallback
-from tests.base import BoringModel
+from tests.base import BoringModel, RandomDataset
 
 
-def test_finetunning_callback(tmpdir):
-    """Test finetunning callbacks works as expected"""
+def test_finetuning_callback(tmpdir):
+    """Test finetuning callbacks works as expected"""
 
     seed_everything(42)
 
-    class FinetunningBoringModel(BoringModel):
+    class FinetuningBoringModel(BoringModel):
         def __init__(self):
             super().__init__()
             self.backbone = nn.Sequential(nn.Linear(32, 32, bias=False), nn.BatchNorm1d(32), nn.ReLU())
@@ -39,6 +40,9 @@ def test_finetunning_callback(tmpdir):
             lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.7)
             return [optimizer], [lr_scheduler]
 
+        def train_dataloader(self):
+            return DataLoader(RandomDataset(32, 64))
+
     class TestCallback(BackboneLambdaFinetuningCallback):
 
         def on_train_epoch_end(self, trainer, pl_module, outputs):
@@ -52,7 +56,7 @@ def test_finetunning_callback(tmpdir):
                 else:
                     assert backbone_lr == current_lr
 
-    model = FinetunningBoringModel()
+    model = FinetuningBoringModel()
     callback = TestCallback(unfreeze_backbone_at_epoch=3, verbose=False)
 
     trainer = Trainer(
