@@ -93,6 +93,7 @@ def test_training_epoch_end_metrics_collection(tmpdir):
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="test requires GPU machine")
 def test_prepare_batch_for_transfer():
+    expected_device = torch.device('cuda', 0)
 
     class CustomBatch:
         def __init__(self, data):
@@ -112,6 +113,7 @@ def test_prepare_batch_for_transfer():
             return batch
 
         def on_after_batch_transfer(self, batch):
+            assert batch.samples.device == batch.targets.device == expected_device
             self.on_after_batch_transfer_hook_rank = self.rank
             self.rank += 1
             batch.targets *= 2
@@ -131,8 +133,7 @@ def test_prepare_batch_for_transfer():
     trainer.accelerator_backend = GPUAccelerator(trainer)
     # running .fit() would require us to implement custom data loaders, we mock the model reference instead
     trainer.get_model = MagicMock(return_value=model)
-    batch_gpu = trainer.accelerator_backend.batch_to_device(batch, torch.device('cuda:0'))
-    expected_device = torch.device('cuda', 0)
+    batch_gpu = trainer.accelerator_backend.batch_to_device(batch, expected_device)
 
     assert model.on_before_batch_transfer_hook_rank == 0
     assert model.transfer_batch_to_device_hook_rank == 1

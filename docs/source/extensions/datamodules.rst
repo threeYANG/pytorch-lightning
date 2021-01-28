@@ -163,6 +163,7 @@ Here's a more realistic, complex DataModule that shows how much more reusable th
         def test_dataloader(self):
             return DataLoader(self.mnist_test, batch_size=32)
 
+
 .. note:: ``setup`` expects a string arg ``stage``. It is used to separate setup logic for ``trainer.fit`` and ``trainer.test``.
 
 
@@ -177,6 +178,7 @@ To define a DataModule define 5 methods:
 - train_dataloader
 - val_dataloader(s)
 - test_dataloader(s)
+
 
 prepare_data
 ^^^^^^^^^^^^
@@ -195,7 +197,9 @@ settings.
             MNIST(os.getcwd(), train=True, download=True, transform=transforms.ToTensor())
             MNIST(os.getcwd(), train=False, download=True, transform=transforms.ToTensor())
 
-.. warning:: `prepare_data` is called from a single GPU. Do not use it to assign state (`self.x = y`).
+
+.. warning:: ``prepare_data`` is called from a single GPU. Do not use it to assign state (``self.x = y``).
+
 
 setup
 ^^^^^
@@ -268,7 +272,6 @@ Use this method to generate the val dataloader.  Usually you just wrap the datas
         def val_dataloader(self):
             return DataLoader(self.mnist_val, batch_size=64)
 
-.. _datamodule-test-dataloader-label:
 
 test_dataloader
 ^^^^^^^^^^^^^^^
@@ -283,11 +286,10 @@ Use this method to generate the test dataloader. Usually you just wrap the datas
         def test_dataloader(self):
             return DataLoader(self.mnist_test, batch_size=64)
 
+
 transfer_batch_to_device
 ^^^^^^^^^^^^^^^^^^^^^^^^
 Override to define how you want to move an arbitrary batch to a device.
-
-.. note:: This hook only runs on single GPU training and DDP (no data-parallel).
 
 .. testcode::
 
@@ -295,14 +297,16 @@ Override to define how you want to move an arbitrary batch to a device.
         def transfer_batch_to_device(self, batch, device):
             x = batch['x']
             x = CustomDataWrapper(x)
-            x.to(device)
+            batch['x'] = x.to(device)
             return batch
+
+
+.. note:: This hook only runs on single GPU training and DDP (no data-parallel).
+
 
 on_before_batch_transfer
 ^^^^^^^^^^^^^^^^^^^^^^^^
-Override to alter or apply batch augmentations to your batch before it is transferred to the device.
-
-.. note:: This hook only runs on single GPU training and DDP (no data-parallel).
+Override to alter or apply augmentations to your batch before it is transferred to the device.
 
 .. testcode::
 
@@ -311,11 +315,13 @@ Override to alter or apply batch augmentations to your batch before it is transf
             batch['x'] = transforms(batch['x'])
             return batch
 
-on_after_batch_transfer
-^^^^^^^^^^^^^^^^^^^^^^^
-Override to alter or apply batch augmentations to your batch after it is transferred to the device.
 
 .. note:: This hook only runs on single GPU training and DDP (no data-parallel).
+
+
+on_after_batch_transfer
+^^^^^^^^^^^^^^^^^^^^^^^
+Override to alter or apply augmentations to your batch after it is transferred to the device.
 
 .. testcode::
 
@@ -323,6 +329,13 @@ Override to alter or apply batch augmentations to your batch after it is transfe
         def on_after_batch_transfer(self, batch):
             batch['x'] = gpu_transforms(batch['x'])
             return batch
+
+
+.. note::
+    This hook only runs on single GPU training and DDP (no data-parallel). This hook
+    will also be called when using CPU device, so adding augmentations here or in
+    ``on_before_batch_transfer`` means the same thing.
+
 
 
 .. note:: To decouple your data from transforms you can parametrize them via ``__init__``.

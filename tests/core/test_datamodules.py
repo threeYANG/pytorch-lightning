@@ -393,6 +393,7 @@ def test_full_loop_dp(tmpdir):
 
 @pytest.mark.skipif(not torch.cuda.is_available(), reason="test requires GPU machine")
 def test_dm_prepare_batch_for_transfer(tmpdir):
+    expected_device = torch.device('cuda', 0)
 
     class CustomBatch:
         def __init__(self, data):
@@ -412,6 +413,7 @@ def test_dm_prepare_batch_for_transfer(tmpdir):
             return batch
 
         def on_after_batch_transfer(self, batch):
+            assert batch.samples.device == batch.targets.device == expected_device
             self.on_after_batch_transfer_hook_rank = self.rank
             self.rank += 1
             batch.targets *= 2
@@ -438,8 +440,7 @@ def test_dm_prepare_batch_for_transfer(tmpdir):
     model.on_after_batch_transfer = dm.on_after_batch_transfer
 
     trainer.accelerator_backend = GPUAccelerator(trainer)
-    batch_gpu = trainer.accelerator_backend.batch_to_device(batch, torch.device('cuda:0'))
-    expected_device = torch.device('cuda', 0)
+    batch_gpu = trainer.accelerator_backend.batch_to_device(batch, expected_device)
 
     assert dm.on_before_batch_transfer_hook_rank == 0
     assert dm.transfer_batch_to_device_hook_rank == 1
