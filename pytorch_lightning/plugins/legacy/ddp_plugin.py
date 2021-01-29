@@ -131,7 +131,7 @@ class DDPPlugin(LightningPlugin):
             args = list(args)
             args[0] = model._prepare_batch_for_transfer(args[0])
 
-        return args
+        return tuple(args)
 
     def optimizer_state(self, optimizer: Optimizer) -> dict:
         return optimizer.state_dict()
