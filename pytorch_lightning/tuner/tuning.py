@@ -58,14 +58,14 @@ class Tuner:
             model.logger = self.trainer.logger  # reset logger binding
 
     def scale_batch_size(
-            self,
-            model,
-            mode: str = 'power',
-            steps_per_trial: int = 3,
-            init_val: int = 2,
-            max_trials: int = 25,
-            batch_arg_name: str = 'batch_size',
-            **fit_kwargs
+        self,
+        model,
+        mode: str = 'power',
+        steps_per_trial: int = 3,
+        init_val: int = 2,
+        max_trials: int = 25,
+        batch_arg_name: str = 'batch_size',
+        **fit_kwargs
     ):
         r"""
         Will iteratively try to find the largest batch size for a given model
@@ -115,16 +115,16 @@ class Tuner:
         )
 
     def lr_find(
-            self,
-            model: LightningModule,
-            train_dataloader: Optional[DataLoader] = None,
-            val_dataloaders: Optional[Union[DataLoader, List[DataLoader]]] = None,
-            min_lr: float = 1e-8,
-            max_lr: float = 1,
-            num_training: int = 100,
-            mode: str = 'exponential',
-            early_stop_threshold: float = 4.0,
-            datamodule: Optional[LightningDataModule] = None
+        self,
+        model: LightningModule,
+        train_dataloader: Optional[DataLoader] = None,
+        val_dataloaders: Optional[Union[DataLoader, List[DataLoader]]] = None,
+        min_lr: float = 1e-8,
+        max_lr: float = 1,
+        num_training: int = 100,
+        mode: str = 'exponential',
+        early_stop_threshold: float = 4.0,
+        datamodule: Optional[LightningDataModule] = None
     ):
         return lr_find(
             self.trainer,
