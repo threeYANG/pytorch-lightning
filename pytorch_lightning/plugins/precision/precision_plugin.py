@@ -1,11 +1,24 @@
+# Copyright The PyTorch Lightning team.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 import math
-from typing import Generator, Union
+from typing import Any, Generator, Sequence, Tuple, Union
 
 import torch
 from torch.optim import Optimizer
 
-from pytorch_lightning.plugins.base_plugin import Plugin
 from pytorch_lightning.core import LightningModule
+from pytorch_lightning.plugins.base_plugin import Plugin
 
 
 class PrecisionPlugin(Plugin):
@@ -21,7 +34,7 @@ class PrecisionPlugin(Plugin):
             for p in group["params"]:
                 yield p
 
-    def connect(self, model: torch.nn.Module, optimizers, lr_schedulers):
+    def connect(self, model: torch.nn.Module, optimizers: Sequence, lr_schedulers: Sequence) -> Tuple[torch.nn.Module, Sequence, Sequence]:
         """Connects this plugin to the accelerator and the training process"""
         return model, optimizers, lr_schedulers
 
@@ -32,9 +45,9 @@ class PrecisionPlugin(Plugin):
         optimizer: torch.optim.Optimizer,
         opt_idx: int,
         should_accumulate: bool,
-        *args,
-        **kwargs,
-    ):
+        *args: Any,
+        **kwargs: Any,
+    ) -> torch.Tensor:
         """performs the actual backpropagation
 
         Args:
@@ -58,7 +71,7 @@ class PrecisionPlugin(Plugin):
 
         return closure_loss
 
-    def clip_gradients(self, optimizer: Optimizer, clip_val: Union[int, float], norm_type: float = float(2.0)):
+    def clip_gradients(self, optimizer: Optimizer, clip_val: Union[int, float], norm_type: float = float(2.0)) -> None:
         """Clips the gradients to a specific value"""
         # TODO: separate TPU case from here
         if clip_val is None:
@@ -69,7 +82,7 @@ class PrecisionPlugin(Plugin):
         if grad_clip_val <= 0:
             return
 
-        parameters = self.master_params(optimizer)
+        parameters = list(self.master_params(optimizer))
 
         max_norm = grad_clip_val
 
