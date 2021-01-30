@@ -11,7 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 r"""
 Finetunning Callback
 ^^^^^^^^^^^^^^^^^^^^
@@ -35,7 +34,6 @@ def multiplicative(epoch):
 
 
 class BaseFinetuningCallback(Callback):
-
     r"""
     BaseFinetuningCallback.
     Overrides any functions with your own logic.
@@ -54,8 +52,7 @@ class BaseFinetuningCallback(Callback):
         module.train()
 
     @staticmethod
-    def _recursive_freeze(module: Module,
-                          train_bn: bool = True) -> None:
+    def _recursive_freeze(module: Module, train_bn: bool = True) -> None:
         """Freezes the layers of a given module.
         Args:
             module: The module to freeze
@@ -75,8 +72,7 @@ class BaseFinetuningCallback(Callback):
                 BaseFinetuningCallback._recursive_freeze(module=child, train_bn=train_bn)
 
     @staticmethod
-    def filter_params(module: Module,
-                      train_bn: bool = True) -> Generator:
+    def filter_params(module: Module, train_bn: bool = True) -> Generator:
         """Yields the trainable parameters of a given module.
 
         Args:
@@ -123,12 +119,10 @@ class BaseFinetuningCallback(Callback):
         BaseFinetuningCallback._make_trainable(module)
         params_lr = optimizer.param_groups[0]['lr'] if lr is None else float(lr)
         denom_lr = initial_denom_lr if lr is None else 1.
-        optimizer.add_param_group(
-            {
-                'params': BaseFinetuningCallback.filter_params(module=module, train_bn=train_bn),
-                'lr': params_lr / denom_lr,
-            }
-        )
+        optimizer.add_param_group({
+            'params': BaseFinetuningCallback.filter_params(module=module, train_bn=train_bn),
+            'lr': params_lr / denom_lr,
+        })
 
     def on_before_accelerator_backend_setup(self, _, pl_module):
         self.freeze_before_training(pl_module)
@@ -146,7 +140,6 @@ class BaseFinetuningCallback(Callback):
 
 
 class BackboneLambdaFinetuningCallback(BaseFinetuningCallback):
-
     r"""
     Finetunne a backbone model based on a learning rate user-defined scheduling.
     When the backbone learning rate reaches the current model learning rate
@@ -205,9 +198,7 @@ class BackboneLambdaFinetuningCallback(BaseFinetuningCallback):
         if hasattr(pl_module, "backbone") and \
            (isinstance(pl_module.backbone, Module) or isinstance(pl_module.backbone, Sequential)):
             return
-        raise MisconfigurationException(
-            "The LightningModule should have a nn.Module `backbone` attribute"
-        )
+        raise MisconfigurationException("The LightningModule should have a nn.Module `backbone` attribute")
 
     def freeze_before_training(self, pl_module: LightningModule):
         self.freeze(pl_module.backbone)
@@ -228,8 +219,10 @@ class BackboneLambdaFinetuningCallback(BaseFinetuningCallback):
                 initial_denom_lr=self.initial_denom_lr
             )
             if self.verbose:
-                log.info(f"Current lr: {round(current_lr, self.round)}, "
-                         f"Backbone lr: {round(initial_backbone_lr, self.round)}")
+                log.info(
+                    f"Current lr: {round(current_lr, self.round)}, "
+                    f"Backbone lr: {round(initial_backbone_lr, self.round)}"
+                )
 
         elif epoch > self.unfreeze_backbone_at_epoch:
             current_lr = optimizer.param_groups[0]['lr']
@@ -239,5 +232,7 @@ class BackboneLambdaFinetuningCallback(BaseFinetuningCallback):
             optimizer.param_groups[-1]["lr"] = next_current_backbone_lr
             self.previous_backbone_lr = next_current_backbone_lr
             if self.verbose:
-                log.info(f"Current lr: {round(current_lr, self.round)}, "
-                         f"Backbone lr: {round(next_current_backbone_lr, self.round)}")
+                log.info(
+                    f"Current lr: {round(current_lr, self.round)}, "
+                    f"Backbone lr: {round(next_current_backbone_lr, self.round)}"
+                )
