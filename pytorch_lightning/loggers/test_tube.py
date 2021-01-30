@@ -92,7 +92,8 @@ class TestTubeLogger(LightningLoggerBase):
     ):
         if Experiment is None:
             raise ImportError(
-                'You want to use `test_tube` logger which is not installed yet, install it with `pip install test-tube`.'
+                'You want to use `test_tube` logger which is not installed yet,'
+                ' install it with `pip install test-tube`.'
             )
         super().__init__()
         self._save_dir = save_dir
